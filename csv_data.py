@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 def load_csv_data(file_path):
     """
@@ -55,17 +56,49 @@ def integrated_average_error(true, actual):
     integrated_error = np.mean(error)
     return integrated_error
 
-def main():
+def plot_columns_with_time(data, time_col, columns):
+    """
+    Plot specified columns against the time column in a 2x3 subplot configuration.
+
+    Args:
+        data (pd.DataFrame): The DataFrame containing the data.
+        time_col (str): The name of the time column.
+        columns (list): List of list of column names to plot (up to 6).
+    """
+    fig, axes = plt.subplots(3, 2, figsize=(12, 12))
+    axes = axes.flatten()
+    for i, generalized_coordinate in enumerate(columns):
+        if i <= 6:
+            for k, data_col in enumerate(generalized_coordinate):
+                if k <= 3:
+                    axes[i].plot(data[time_col], data[data_col])
+
+            axes[i].set_title(f"{generalized_coordinate[1]}")
+            axes[i].set_xlabel(time_col)
+            axes[i].set_ylabel("Radians")
+    # Hide any unused subplots
+    for j in range(len(columns), 6):
+        fig.delaxes(axes[j])
+    plt.tight_layout()
+    plt.show()
+
+if __name__ == "__main__":
     # Example usage
-    file_path = 'data.csv'  # Replace with your CSV file path
+
+    file_path = r'..\7.7 Track Data\trial_1.csv'  # Replace with your CSV file path
     data = load_csv_data(file_path)
-    
+
     if data is not None:
         summarize_data(data)
-        
-        # Example true and actual values for integrated average error calculation
-        true_values = data['true_column']  # Replace with your true column name
-        actual_values = data['actual_column']  # Replace with your actual column name
-        
-        error = integrated_average_error(true_values, actual_values)
-        print(f"Integrated Average Error: {error}")
+
+        # Plot up to 6 columns against time in a 2x3 subplot configuration
+        time_col = 'time'
+        columns_to_plot = []
+        for i in range(5):
+            columns = [f'q_{i}', f'q_des_{i}', f'q_cmd_{i}']
+            columns_to_plot.append(columns)
+        plot_columns_with_time(data, time_col, columns_to_plot)
+
+        # # Example true and actual values for integrated average error calculation
+        # true_values = data['true_column']  # Replace with your true column name
+        # actual_values = data['actual_column']  # Replace with your actual column name
