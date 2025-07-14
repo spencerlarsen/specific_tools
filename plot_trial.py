@@ -1,6 +1,8 @@
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import argparse
+
 
 def load_csv_data(file_path):
     """
@@ -108,49 +110,33 @@ def plot_columns_with_time(data, time_col, columns):
     plt.show()
 
 if __name__ == "__main__":
-    # Example usage
+    parser = argparse.ArgumentParser(description='Bellows Adaptive Joint Controller')
+    parser.add_argument('-f',  '--file_path',         type=str,   default='/home/spencerlarsen/Documents/7.7 Track Data/trial_1.csv',    help='Path to the CSV file. Default is trial_1.csv.')
+    args = parser.parse_args()
 
-    total_errors = []
+    file_path = args.file_path  # Replace with your CSV file path
+    data = load_csv_data(file_path)
 
-    for i in range(1, 4):
-        print(f" \n                            Processing trial {i}...")
-        file_path = f'/home/spencerlarsen/Documents/7.7 Track Data/lamSoft_{i}.csv'  # Replace with your CSV file path
-        data = load_csv_data(file_path)
+    if data is not None:
+        summarize_data(data)
 
-        if data is not None:
-            summarize_data(data)
-
-            # Plot up to 6 columns against time in a 2x3 subplot configuration
-            time_col = 'time'
-            columns_to_plot = []
-            for i in range(6):
-                columns = [f'q_{i}', f'q_des_{i}', f'q_cmd_{i}']
-                columns_to_plot.append(columns)
-            plot_columns_with_time(data, time_col, columns_to_plot)
-
-        # Integrated average error calculation
-        errors = []
-        # Create mask for time range (25 to 150 seconds)
-        mask = (data['time'] > 25) & (data['time'] < 150)
-        
+        # Plot up to 6 columns against time in a 2x3 subplot configuration
+        time_col = 'time'
+        columns_to_plot = []
         for i in range(6):
-            true_values = data.loc[mask, f'q_{i}']  # Apply mask to filter data
-            actual_values = data.loc[mask, f'q_cmd_{i}']  # Apply mask to filter data
-            error = integrated_average_error(true_values, actual_values)
-            print(f"Integrated average error for generalized coordinate {i} (25-150s): {error:.4f}")
-            errors.append(error)
-        total_errors.extend(errors)
+            columns = [f'q_{i}', f'q_des_{i}', f'q_cmd_{i}']
+            columns_to_plot.append(columns)
+        plot_columns_with_time(data, time_col, columns_to_plot)
+
+    # Integrated average error calculation
+    errors = []
+    for i in range(6):
+        true_values = data[f'q_{i}']  # Replace with your true column name
+        actual_values = data[f'q_cmd_{i}']  # Replace with your actual column name
+        error = integrated_average_error(true_values, actual_values)
+        print(f"Integrated average error for generalized coordinate {i}: {error:.4f}")
+        errors.append(error)
 
     print("\n                      Summary of Integrated Average Errors:")
-    print(f"Integrated average error for all trials: {np.mean(total_errors):.4f}")
-    print("Total errors across all trials:")
-    
-    # Reshape total_errors back into trials (assuming 6 errors per trial)
-    errors_per_trial = 6
-    for trial_num in range(len(total_errors) // errors_per_trial):
-        start_idx = trial_num * errors_per_trial
-        end_idx = start_idx + errors_per_trial
-        trial_errors = total_errors[start_idx:end_idx]
-        formatted_errors = [f"{err:.4f}" for err in trial_errors]
-        print(f"Trial {trial_num + 1}: {formatted_errors}")
+    print(f"Integrated average error for all trials: {np.mean(errors):.4f}")
 
